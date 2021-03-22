@@ -11,32 +11,34 @@
 
 class UGridPanel;
 
-/**
- * 
- */
 UCLASS()
 class INVENTORYSYSTEM_API UInventoryWindow : public UInventoryWidget
 {
 	GENERATED_BODY()
 	
 public:	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, noclear, Category = "Inventory System")
-	UClass* InventorySlotBPClass;
 
+	void CreateSlots(int32 InNumberOfSlots, UClass* InventorySlotClass);
 	void AddItemToInventory(int32 SlotIndex, FSlotStruct ItemToAdd);
 	void RemoveItemFromInventory(int32 Index);
-	void CreateInventorySlots(UClass* InventorySlotClass);
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	void SetInventoryGrid(UGridPanel* NewInventoryGrid);
-	void SetInventory(TArray<FSlotStruct> NewInventory);
 	void EmptyInventory();
-	void SetNumberOfSlots(int32 InNumberOfSlots);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+		void SetInventoryGrid(UGridPanel* NewInventoryGrid) { InventoryGrid = NewInventoryGrid; };
+	void SetInventory(TArray<FSlotStruct> NewInventory);
 
 protected:
-	virtual void SlotWidgetOnClicked(USlotWidget* InSlotWidget) final;
+
+	virtual void OnSlotClicked(USlotWidget* InSlotWidget) final;
 
 private:
+
+	int32 NumberOfSlots;
+
 	UPROPERTY()
 	UGridPanel* InventoryGrid;
-	int32 NumberOfSlots;
+
+	int32 GetNumberOfSlots() { return NumberOfSlots; };
+
+	void SetNumberOfSlots(int32 NewNumberOfSlots) { NumberOfSlots = NewNumberOfSlots; };
 };

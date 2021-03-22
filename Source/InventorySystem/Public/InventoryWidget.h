@@ -9,10 +9,10 @@
 #include "SlotWidget.h"
 #include "InventoryWidget.generated.h"
 
-DECLARE_DELEGATE_OneParam(FInventoryWidgetOnKeyDown, const FKeyEvent&);
-DECLARE_DELEGATE_ThreeParams(FInventoryWidgetOnSlotClicked, UInventoryWidget*, uint8, FSlotStruct);
-DECLARE_DELEGATE_OneParam(FOnInventoryWidgetSlotAddedToFocusPath, FSlotStruct);
-DECLARE_DELEGATE(FOnInventoryWidgetSlotRemovedFromFocusPath);
+DECLARE_DELEGATE_OneParam(FKeyDown, const FKeyEvent&);
+DECLARE_DELEGATE_ThreeParams(FSlotClicked, UInventoryWidget*, uint8, FSlotStruct);
+DECLARE_DELEGATE_OneParam(FSlotAddedToFocusPath, FSlotStruct);
+DECLARE_DELEGATE(FSlotRemovedFromFocusPath);
 
 class UInventoryComponent;
 class FOnSlotWidgetButtonClicked;
@@ -24,27 +24,29 @@ class INVENTORYSYSTEM_API UInventoryWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	FInventoryWidgetOnKeyDown InventoryWidgetOnKeyDown;
-	FInventoryWidgetOnSlotClicked InventoryWidgetOnSlotClicked;
-	FOnInventoryWidgetSlotAddedToFocusPath OnInventoryWidgetSlotAddedToFocusPath;
-	FOnInventoryWidgetSlotRemovedFromFocusPath OnInventoryWidgetSlotRemovedFromFocusPath;
 
-	UWidget* GetWidgetToFocus() { return WidgetToFocusInternal.Get(); };
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	void SetWidgetToFocus(UWidget* WidgetToFocus) { WidgetToFocusInternal = WidgetToFocus; };
+	FKeyDown KeyDown;
+	FSlotClicked SlotClicked;
+	FSlotAddedToFocusPath SlotAddedToFocusPath;
+	FSlotRemovedFromFocusPath SlotRemovedFromFocusPath;
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void SetFirstWidgetToFocus(UWidget* WidgetToFocus);
-	UWidget* GetFirstWidgetToFocus() { return FirstWidgetToFocusInternal.Get(); };
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	void SetWidgetToFocus(UWidget* WidgetToFocus) { WidgetToFocusInternal = WidgetToFocus; };
+
+	UWidget* GetFirstWidgetToFocus() { return FirstWidgetToFocusInternal; };
+	UWidget* GetWidgetToFocus() { return WidgetToFocusInternal; };
 
 protected:
-	TWeakObjectPtr<UInventoryComponent> InventoryComponent;
-	TWeakObjectPtr<UWidget> WidgetToFocusInternal;
-	TWeakObjectPtr<UWidget> FirstWidgetToFocusInternal;
-	uint8 Status;
+
 	uint8 SlotIndex;
 
-	virtual void SlotWidgetOnClicked(USlotWidget* InSlotWidget);
-	virtual void SlotWidgetOnAddedToFocusPath(USlotWidget* InSlotWidget);
-	virtual void SlotWidgetOnRemovedFromFocusPath(USlotWidget* InSlotWidget);
+	UWidget* WidgetToFocusInternal;
+	UWidget* FirstWidgetToFocusInternal;
+
+	virtual void OnSlotClicked(USlotWidget* InSlotWidget);
+	virtual void OnSlotAddedToFocusPath(USlotWidget* InSlotWidget);
+	virtual void OnSlotRemovedFromFocusPath(USlotWidget* InSlotWidget);
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 };

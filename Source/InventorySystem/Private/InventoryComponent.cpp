@@ -23,28 +23,46 @@ void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Create Inventory Widgets
+	UWorld* World = GetWorld();
+
+	// Inventory Window
 	PrepareInventory();
-	InventoryWindow = Cast<UInventoryWindow>(CreateInventoryWidget(InventoryWindowBPClass));
-	InventoryWindow->CreateInventorySlots(InventorySlotBPClass);
-	CharacterSheet = Cast<UCharacterSheet>(CreateInventoryWidget(CharacterSheetBPClass));
-	LootWindow = Cast<UInventoryWindow>(CreateInventoryWidget(LootWindowBPClass));
-	LootWindow->CreateInventorySlots(InventorySlotBPClass);
-	UWorld* World = this->GetWorld();
-	InfoWindow = CreateWidget<UInfoWindow>(World, InfoWindowBPClass);
-	
+	InventoryWindow = CreateWidget<UInventoryWindow>(World, BPClasses.InventoryWindow);
+	InventoryWindow->CreateSlots(NumberOfSlots.InventoryWindow, BPClasses.InventorySlot);
+
+	// Character Sheet
+	CharacterSheet = CreateWidget<UCharacterSheet>(World, BPClasses.CharacterSheet);
+
+	// Loot Window
+	LootWindow = CreateWidget<ULootWindow>(World, BPClasses.LootWindow);
+	LootWindow->CreateSlots(NumberOfSlots.LootWindow, BPClasses.LootWindow);
+
+	// Info Window
+	InfoWindow = CreateWidget<UInfoWindow>(World, BPClasses.InfoWindow);
+
+	//PrepareInventory();
+	//InventoryWindow = Cast<UInventoryWindow>(CreateInventoryWidget(InventoryWindowBPClass));
+	//InventoryWindow->CreateInventorySlots(InventorySlotBPClass);
+	//CharacterSheet = Cast<UCharacterSheet>(CreateInventoryWidget(CharacterSheetBPClass));
+	//LootWindow = Cast<UInventoryWindow>(CreateInventoryWidget(LootWindowBPClass));
+	//LootWindow->CreateInventorySlots(InventorySlotBPClass);
+	//UWorld* World = this->GetWorld();
+	//InfoWindow = CreateWidget<UInfoWindow>(World, InfoWindowBPClass);
+
+	// Binding delegates for Inventory Widgets
 	InventoryWidgets = { InventoryWindow, CharacterSheet, LootWindow };
-	for (uint8 i = 0; i < InventoryWidgets.Num(); i++)
-	{
+	for (uint8 i = 0; i < InventoryWidgets.Num(); i++) {
 		BindDelegates(InventoryWidgets[i]);
 	}
 }
 
 void UInventoryComponent::BindDelegates(UInventoryWidget* InventoryWidget)
 {
-	InventoryWidget->InventoryWidgetOnKeyDown.BindUObject(this, &UInventoryComponent::OnInventoryWidgetKeyDown);
-	InventoryWidget->InventoryWidgetOnSlotClicked.BindUObject(this, &UInventoryComponent::NativeOnInventoryWidgetSlotClicked);
-	InventoryWidget->OnInventoryWidgetSlotAddedToFocusPath.BindUObject(this, &UInventoryComponent::OnSlotAddedToFocusPath);
-	InventoryWidget->OnInventoryWidgetSlotRemovedFromFocusPath.BindUObject(this, &UInventoryComponent::OnSlotRemovedFromFocusPath);
+	InventoryWidget->KeyDown.BindUObject(this, &UInventoryComponent::OnKeyDown);
+	InventoryWidget->SlotClicked.BindUObject(this, &UInventoryComponent::OnSlotClicked);
+	InventoryWidget->SlotAddedToFocusPath.BindUObject(this, &UInventoryComponent::OnSlotAddedToFocusPath);
+	InventoryWidget->SlotRemovedFromFocusPath.BindUObject(this, &UInventoryComponent::OnSlotRemovedFromFocusPath);
 }
 
 void UInventoryComponent::OnSlotAddedToFocusPath(FSlotStruct InSlotStruct)
@@ -52,9 +70,7 @@ void UInventoryComponent::OnSlotAddedToFocusPath(FSlotStruct InSlotStruct)
 	InfoWindow->SetSlotStruct(InSlotStruct);
 	InfoWindow->SetClickReason(ClickReason);
 	if (InSlotStruct.Quantity > 0)
-	{
 		InfoWindow->AddToViewport();
-	}
 }
 
 void UInventoryComponent::OnSlotRemovedFromFocusPath()
@@ -69,15 +85,12 @@ void UInventoryComponent::Interact()
 	TArray<AActor*> OverlappingActors;
 	GetOwner()->GetOverlappingActors(OverlappingActors, AActor::StaticClass());
 
-	for (int32 i = 0; i < OverlappingActors.Num(); i++)
-	{
+	for (int32 i = 0; i < OverlappingActors.Num(); i++) {
 		AActor* OverlappingActor = OverlappingActors[i];
 		bool IsActorInteractable = UKismetSystemLibrary::DoesImplementInterface(OverlappingActor, UInteractInterfaceInventory::StaticClass());
-		if (IsActorInteractable)
-		{
+		if (IsActorInteractable) {
 			AItemCpp* Item = Cast<AItemCpp>(OverlappingActor);
-			if (Item != nullptr)
-			{
+			if (Item != nullptr) {
 				FItemStruct ItemStruct = Item->GetItemStruct();
 				FSlotStruct SlotStruct = { ItemStruct, 1 };
 				uint8 Index = AddToInventory(SlotStruct);
@@ -86,10 +99,8 @@ void UInventoryComponent::Interact()
 				return;
 			}
 			AContainer* Container = Cast<AContainer>(OverlappingActor);
-			if (Container != nullptr)
-			{
-				if (Container->IsLootable())
-				{
+			if (Container != nullptr) {
+				if (Container->IsLootable()) {
 					ActiveContainer = Container;
 					TArray<FSlotStruct> Loot = ActiveContainer->GetInventory();
 					SetLootWindow(Loot);
@@ -100,33 +111,23 @@ void UInventoryComponent::Interact()
 	}
 }
 
-void UInventoryComponent::NativeOnInventoryWidgetSlotClicked(UInventoryWidget* InInventoryWidget, uint8 InSlotIndex, FSlotStruct InSlotStruct)
+void UInventoryComponent::OnSlotClicked(UInventoryWidget* InInventoryWidget, uint8 InSlotIndex, FSlotStruct InSlotStruct)
 {
 	if (InInventoryWidget == CharacterSheet)
-	{
 		ClickReason = EClickReason::UnEquip;
-	}
 	else if (InInventoryWidget == LootWindow)
-	{
 		ClickReason = EClickReason::Take;
-	}
-	else
-	{
+	else {
 		// When InventoryWindow has the focus do the appropriate action according to which widget is open
-		if (ClickReason == EClickReason::UnEquip || ClickReason == EClickReason::Take)
-		{
+		if (ClickReason == EClickReason::UnEquip || ClickReason == EClickReason::Take) {
 			if (LootWindow->IsInViewport())
-			{
 				ClickReason = EClickReason::Drop;
-			}
 			else
-			{
 				ClickReason = EClickReason::Equip;
-			}
 		}
 	}
 
-	OnInventoryWidgetSlotClicked(InSlotStruct);
+	OnSlotClicked(InSlotStruct);
 	uint8 Index = 0;
 
 	switch (ClickReason)
@@ -140,8 +141,7 @@ void UInventoryComponent::NativeOnInventoryWidgetSlotClicked(UInventoryWidget* I
 		break;
 	case EClickReason::Drop:
 		RemoveFromInventory(InSlotIndex);
-		if (LootWindow->IsInViewport())
-		{
+		if (LootWindow->IsInViewport()) {
 			Index = ActiveContainer->AddToInventory(InSlotStruct);
 			LootWindow->AddItemToInventory(Index, InSlotStruct);
 		}
@@ -158,7 +158,7 @@ void UInventoryComponent::NativeOnInventoryWidgetSlotClicked(UInventoryWidget* I
 	}
 }
 
-UInventoryWidget* UInventoryComponent::CreateInventoryWidget(UClass* WidgetClass)
+/*UInventoryWidget* UInventoryComponent::CreateInventoryWidget(UClass* WidgetClass)
 {
 	UWorld* World = this->GetWorld();
 	UInventoryWidget* CreatedWidget = CreateWidget<UInventoryWidget>(World, WidgetClass);
@@ -177,7 +177,7 @@ UInventoryWidget* UInventoryComponent::CreateInventoryWidget(UClass* WidgetClass
 	}
 
 	return CreatedWidget;
-}
+}*/
 
 void UInventoryComponent::ToggleInventory()
 {
@@ -204,7 +204,7 @@ bool UInventoryComponent::CheckIfKeyPressed(TArray<FInputActionKeyMapping> InInp
 	return false;
 }
 
-void UInventoryComponent::OnInventoryWidgetKeyDown(const FKeyEvent& InKeyEvent)
+void UInventoryComponent::OnKeyDown(const FKeyEvent& InKeyEvent)
 {
 	FKey PressedKey = InKeyEvent.GetKey();
 
@@ -372,13 +372,13 @@ TArray<FInputActionKeyMapping> UInventoryComponent::GetToggleActionKeyMappings(E
 	switch (InToggleAction)
 	{
 	case EToggleAction::Inventory:		
-		InputSettings->GetActionMappingByName(ToggleInventoryActionName, ToggleInventoryKeyMappings);
+		InputSettings->GetActionMappingByName(ActionMappingNames.ToggleInventory, ToggleInventoryKeyMappings);
 		break;
 	case EToggleAction::CharacterSheet:
-		InputSettings->GetActionMappingByName(ToggleCharacterSheetActionName, ToggleInventoryKeyMappings);
+		InputSettings->GetActionMappingByName(ActionMappingNames.ToggleCharacterSheet, ToggleInventoryKeyMappings);
 		break;
 	case EToggleAction::LootWindow:
-		InputSettings->GetActionMappingByName(ToggleLootWindowActionName, ToggleInventoryKeyMappings);
+		InputSettings->GetActionMappingByName(ActionMappingNames.ToggleLootWindow, ToggleInventoryKeyMappings);
 		break;
 	}
 
@@ -399,10 +399,10 @@ TArray<FInputActionKeyMapping> UInventoryComponent::GetInputActionKeyMappings(EI
 	switch (InputAction)
 	{
 	case EInputAction::ChangeFocusedWindow:
-		ActionName = ChangeFocusedWindowActionName;
+		ActionName = ActionMappingNames.SwitchFocusedWindow;
 		break;
 	case EInputAction::ToggleInventory:
-		ActionName = ToggleInventoryActionName;
+		ActionName = ActionMappingNames.ToggleInventory;
 		break;
 	}
 
@@ -413,8 +413,8 @@ TArray<FInputActionKeyMapping> UInventoryComponent::GetInputActionKeyMappings(EI
 
 void UInventoryComponent::PrepareInventory()
 {
-	Inventory.Empty(NumberOfSlots);
-	Inventory.AddZeroed(NumberOfSlots);
+	Inventory.Empty(NumberOfSlots.InventoryWindow);
+	Inventory.AddZeroed(NumberOfSlots.InventoryWindow);
 }
 
 void UInventoryComponent::Equip(FItemStruct Item)

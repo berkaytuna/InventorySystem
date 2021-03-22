@@ -12,17 +12,39 @@
 #include "Components/CanvasPanel.h"
 #include "Components/Button.h"
 
-/*void UInventoryWindow::NativeOnFocusLost(const FFocusEvent& InFocusEvent)
+void UInventoryWindow::CreateSlots(int32 InNumberOfSlots, UClass* InventorySlotClass)
 {
-	UE_LOG(LogTemp, Warning, TEXT("NativeOnFocusLost! - InventoryWindow"));
+	SetNumberOfSlots(InNumberOfSlots);
 
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-	SetUserFocus(PlayerController);	
-}*/
+	for (int32 i = 0; i < NumberOfSlots; i++) {
+		UInventorySlot* InventorySlot = CreateWidget<UInventorySlot>(this, InventorySlotClass);
+		InventorySlot->Clicked.BindUObject(this, &UInventoryWindow::OnSlotClicked);
+		InventorySlot->AddedToFocusPath.BindUObject(this, &UInventoryWindow::OnSlotAddedToFocusPath);
+		InventorySlot->RemovedFromFocusPath.BindUObject(this, &UInventoryWindow::OnSlotRemovedFromFocusPath);
 
-void UInventoryWindow::SetNumberOfSlots(int32 InNumberOfSlots)
+		if (i == 0)
+			SetFirstWidgetToFocus(InventorySlot->GetButton());
+
+		int32 InRow = i / 8;
+		int32 InCollumn = i % 8;
+
+		if (InventoryGrid != nullptr)
+			InventoryGrid->AddChildToGrid(InventorySlot, InRow, InCollumn);
+		else
+			UE_LOG(LogTemp, Warning, TEXT("InventoryGrid is nullptr!"));
+	}
+}
+
+void UInventoryWindow::AddItemToInventory(int32 InSlotIndex, FSlotStruct InItemToAdd)
 {
-	NumberOfSlots = InNumberOfSlots;
+	UInventorySlot* InventorySlot = Cast<UInventorySlot>(InventoryGrid->GetChildAt(InSlotIndex));
+	InventorySlot->SetSlotStruct(InItemToAdd);
+}
+
+void UInventoryWindow::RemoveItemFromInventory(int32 Index)
+{
+	UInventorySlot* InventorySlot = Cast<UInventorySlot>(InventoryGrid->GetChildAt(Index));
+	InventorySlot->Empty();
 }
 
 void UInventoryWindow::EmptyInventory()
@@ -46,63 +68,9 @@ void UInventoryWindow::SetInventory(TArray<FSlotStruct> InInventory)
 	}
 }
 
-void UInventoryWindow::SetInventoryGrid(UGridPanel* InInventoryGrid)
-{
-	InventoryGrid = InInventoryGrid;
-}
-
-void UInventoryWindow::SlotWidgetOnClicked(USlotWidget* InSlotWidget)
+void UInventoryWindow::OnSlotClicked(USlotWidget* InSlotWidget)
 {
 	SlotIndex = InventoryGrid->GetChildIndex(InSlotWidget);
-	Super::SlotWidgetOnClicked(InSlotWidget);
-}
-
-void UInventoryWindow::AddItemToInventory(int32 InSlotIndex, FSlotStruct InItemToAdd)
-{
-	UInventorySlot* InventorySlot = Cast<UInventorySlot>(InventoryGrid->GetChildAt(InSlotIndex));
-	InventorySlot->SetSlotStruct(InItemToAdd);
-}
-
-void UInventoryWindow::RemoveItemFromInventory(int32 Index)
-{
-	UInventorySlot* InventorySlot = Cast<UInventorySlot>(InventoryGrid->GetChildAt(Index));
-	InventorySlot->Empty();
-}
-
-void UInventoryWindow::CreateInventorySlots(UClass* InInventorySlotClass)
-{
-	for (int32 i = 0; i < NumberOfSlots; i++)
-	{
-		UInventorySlot* InventorySlot = CreateWidget<UInventorySlot>(this, InInventorySlotClass);
-		InventorySlot->OnSlotClicked.BindUObject(this, &UInventoryWindow::SlotWidgetOnClicked);
-		InventorySlot->OnSlotAddedToFocusPath.BindUObject(this, &UInventoryWindow::SlotWidgetOnAddedToFocusPath);
-		InventorySlot->OnSlotRemovedFromFocusPath.BindUObject(this, &UInventoryWindow::SlotWidgetOnRemovedFromFocusPath);
-
-		if (i == 0)
-		{
-			SetFirstWidgetToFocus(InventorySlot->GetButton());
-		}
-
-		/*bool bInventorySlotExists = InventoryComponent->Inventory.IsValidIndex(i);
-
-		if (bInventorySlotExists)
-		{
-			InventorySlot->SlotStruct = InventoryComponent->Inventory[i];
-		}*/
-
-		//InventorySlot->AddToViewport();
-
-		int32 InRow = i / 8;
-		int32 InCollumn = i % 8;
-
-		if (InventoryGrid != nullptr)
-		{
-			InventoryGrid->AddChildToGrid(InventorySlot, InRow, InCollumn);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("InventoryGrid is nullptr!"));
-		}
-	}
+	Super::OnSlotClicked(InSlotWidget);
 }
 

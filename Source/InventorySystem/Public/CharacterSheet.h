@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Written by Berkay Tuna, March 2021
 
 #pragma once
 
@@ -9,20 +9,20 @@
 
 class UEquipmentSlot;
 
-/**
- *
- */
 UCLASS()
 class INVENTORYSYSTEM_API UCharacterSheet : public UInventoryWidget
 {
 	GENERATED_BODY()
 
 public:
-	TArray<UEquipmentSlot*> GetSlots();
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void SetSlots(TArray<UEquipmentSlot*> Slots);
 
+	TArray<UEquipmentSlot*> GetSlots() { return Slots; };
+
 private:
+
 	UPROPERTY()
 	TArray<UEquipmentSlot*> Slots;
 };

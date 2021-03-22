@@ -54,38 +54,72 @@ enum EInputAction
 	ToggleInventory,
 };
 
+USTRUCT()
+struct FNumberOfSlots
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Number of Slots")
+	int32 InventoryWindow;
+
+	UPROPERTY(EditAnywhere, Category = "Number of Slots")
+	int32 LootWindow;
+};
+
+USTRUCT()
+struct FBPClasses
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "BP Classes")
+	UClass* InventoryWindow;
+
+	UPROPERTY(EditAnywhere, Category = "BP Classes")
+	UClass* CharacterSheet;
+
+	UPROPERTY(EditAnywhere, Category = "BP Classes")
+	UClass* LootWindow;
+
+	UPROPERTY(EditAnywhere, Category = "BP Classes")
+	UClass* InfoWindow;
+
+	UPROPERTY(EditAnywhere, Category = "BP Classes")
+	UClass* InventorySlot;
+};
+
+USTRUCT()
+struct FActionMappingNames
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Action Mapping Names")
+	FName ToggleInventory;
+
+	UPROPERTY(EditAnywhere, Category = "Action Mapping Names")
+	FName ToggleCharacterSheet;
+
+	UPROPERTY(EditAnywhere, Category = "Action Mapping Names")
+	FName ToggleLootWindow;
+
+	UPROPERTY(EditAnywhere, Category = "Action Mapping Names")
+	FName SwitchFocusedWindow;
+};
+
 UCLASS(Blueprintable, ClassGroup = (InventorySystem), meta = (BlueprintSpawnableComponent, DisplayName = "Inventory Component"))
 class INVENTORYSYSTEM_API UInventoryComponent : public UActorComponent, public IInventoryInterface
 {
 	GENERATED_BODY()
 
 public:
-	// We are using BP Classes because on the screen there will be custom BP classes inherited from C++
-	UPROPERTY(EditAnywhere, Category = "Inventory")
-	UClass* InfoWindowBPClass;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, noclear, Category = "Inventory")
-	UClass* InventoryWindowBPClass;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, noclear, Category = "Inventory")
-	UClass* CharacterSheetBPClass;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, noclear, Category = "Inventory")
-	UClass* LootWindowBPClass;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, noclear, Category = "Inventory")
-	UClass* InventorySlotBPClass;
-	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (DisplayName = "Toggle Inventory Action Mapping Name"))
-	FName ToggleInventoryActionName;
-	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (DisplayName = "Toggle Character Sheet Action Mapping Name"))
-	FName ToggleCharacterSheetActionName;
-	UPROPERTY(EditAnywhere, Category = "Inventory", meta = (DisplayName = "Toggle Loot Action Mapping Name"))
-	FName ToggleLootWindowActionName;
-	UPROPERTY(EditAnywhere, Category = "Inventory")
-	FName ChangeFocusedWindowActionName;
-	UPROPERTY(EditAnywhere, Category = "Inventory")
-	UTexture2D* BlankSlotTexture;
-	// Mouse Lock Mode for all Widgets
-	UPROPERTY(EditAnywhere, Category = "Inventory")
+
+	UPROPERTY(EditAnywhere, Category = "Inventory System")
 	EMouseLockMode WidgetMouseLockMode;
-	UPROPERTY(EditAnywhere, Category = "Inventory")
-	int32 NumberOfSlots;
+	UPROPERTY(EditAnywhere, Category = "Inventory System")
+	FBPClasses BPClasses;
+	UPROPERTY(EditAnywhere, Category = "Inventory System")
+	FActionMappingNames ActionMappingNames;
+	UPROPERTY(EditAnywhere, Category = "Inventory System")
+	FNumberOfSlots NumberOfSlots;
 
 	// Inventory Widgets are the main widgets on screen
 	UPROPERTY()
@@ -112,9 +146,10 @@ public:
 	void SetLootWindow(TArray<FSlotStruct> InInventory);
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void ToggleInventory();
-	void OnInventoryWidgetKeyDown(const FKeyEvent& InKeyEvent);
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCosmetic, Category = "Inverntory System")
-	void OnInventoryWidgetSlotClicked(FSlotStruct SlotStruct);
+	void OnKeyDown(const FKeyEvent& InKeyEvent);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCosmetic, Category = "Inventory System")
+	void OnSlotClicked(FSlotStruct SlotStruct);
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -133,7 +168,7 @@ private:
 	void PrepareInventory();
 	void OnSlotAddedToFocusPath(FSlotStruct InSlotStruct);
 	void OnSlotRemovedFromFocusPath();
-	void NativeOnInventoryWidgetSlotClicked(UInventoryWidget* InInventoryWidget, uint8 InSlotIndex, FSlotStruct InSlotStruct);
+	void OnSlotClicked(UInventoryWidget* InInventoryWidget, uint8 InSlotIndex, FSlotStruct InSlotStruct);
 	UInventoryWidget* CreateInventoryWidget(UClass* WidgetClass);
 	void ToggleWidgetInternal(UInventoryWidget* InWidget, EMouseLockMode InMouseLockMode);
 	bool CheckIfKeyPressed(TArray<FInputActionKeyMapping> InInputActionKeyMappings, FKey PressedKey);
