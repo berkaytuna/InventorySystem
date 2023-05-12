@@ -10,7 +10,7 @@
     "DocsURL": "",
     "MarketplaceURL": "",
     "SupportURL": "",
-    "EngineVersion": "4.24.0",
+    "EngineVersion": "5.1.0",
     "CanContainContent": false,
     "Installed": true,
     "Modules": [
@@ -19,8 +19,7 @@
             "Type": "Runtime",
             "LoadingPhase": "PreDefault",
             "WhitelistPlatforms": [
-                "Win64",
-                "Win32"
+                "Win64"
             ]
         }
     ]
