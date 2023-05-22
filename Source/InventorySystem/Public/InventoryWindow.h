@@ -9,7 +9,7 @@
 #include "SlotStruct.h"
 #include "InventoryWindow.generated.h"
 
-class UGridPanel;
+class UUniformGridPanel;
 
 UCLASS()
 class INVENTORYSYSTEM_API UInventoryWindow : public UInventoryWidget
@@ -24,7 +24,7 @@ public:
 	void EmptyInventory();
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-		void SetInventoryGrid(UGridPanel* NewInventoryGrid) { InventoryGrid = NewInventoryGrid; };
+	void SetInventoryGrid(UUniformGridPanel* NewInventoryGrid) { InventoryGrid = NewInventoryGrid; };
 	void SetInventory(TArray<FSlotStruct> NewInventory);
 
 protected:
@@ -36,7 +36,7 @@ private:
 	int32 NumberOfSlots;
 
 	UPROPERTY()
-	UGridPanel* InventoryGrid;
+	UUniformGridPanel* InventoryGrid;
 
 	int32 GetNumberOfSlots() { return NumberOfSlots; };
 

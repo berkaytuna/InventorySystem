@@ -26,20 +26,59 @@ void UInventoryComponent::BeginPlay()
 	// Create Inventory Widgets
 	UWorld* World = GetWorld();
 
+	//FString debugMessage = "Please set the %s of Inventory Component!";
 	// Inventory Window
 	PrepareInventory();
-	InventoryWindow = CreateWidget<UInventoryWindow>(World, BPClasses.InventoryWindow);
+	if (BPClasses.InventoryWindow)
+	{
+		InventoryWindow = CreateWidget<UInventoryWindow>(World, BPClasses.InventoryWindow);
+	}
+	else
+	{
+		//TODO: Find out how to use FString here
+		// e.g. UE_LOG(LogTemp, Warning, debugMessage.GetCharArray(), "Inventory Window")
+		UE_LOG(LogTemp, Warning, TEXT("Inventory Window not set!"));
+		// TODO: Write also to screen as user input
+		return;
+	}
 	InventoryWindow->CreateSlots(NumberOfSlots.InventoryWindow, BPClasses.InventorySlot);
 
 	// Character Sheet
-	CharacterSheet = CreateWidget<UCharacterSheet>(World, BPClasses.CharacterSheet);
+	if (BPClasses.CharacterSheet)
+	{
+		CharacterSheet = CreateWidget<UCharacterSheet>(World, BPClasses.CharacterSheet);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Character Sheet not set!"));
+		// TODO: Write also to screen as user input
+		return;
+	}
 
-	// Loot Window
-	LootWindow = CreateWidget<ULootWindow>(World, BPClasses.LootWindow);
+	/*// Loot Window
+	if (BPClasses.LootWindow)
+	{
+		LootWindow = CreateWidget<ULootWindow>(World, BPClasses.LootWindow);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Loot Window not set!"));
+		// TODO: Write also to screen as user input
+		return;
+	}
 	LootWindow->CreateSlots(NumberOfSlots.LootWindow, BPClasses.LootWindow);
 
 	// Info Window
-	InfoWindow = CreateWidget<UInfoWindow>(World, BPClasses.InfoWindow);
+	if (BPClasses.InfoWindow)
+	{
+		InfoWindow = CreateWidget<UInfoWindow>(World, BPClasses.InfoWindow);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Info Window not set!"));
+		// TODO: Write also to screen as user input
+		return;
+	}*/
 
 	//PrepareInventory();
 	//InventoryWindow = Cast<UInventoryWindow>(CreateInventoryWidget(InventoryWindowBPClass));
@@ -51,7 +90,7 @@ void UInventoryComponent::BeginPlay()
 	//InfoWindow = CreateWidget<UInfoWindow>(World, InfoWindowBPClass);
 
 	// Binding delegates for Inventory Widgets
-	InventoryWidgets = { InventoryWindow, CharacterSheet, LootWindow };
+	InventoryWidgets = { InventoryWindow, CharacterSheet/*, LootWindow*/};
 	for (uint8 i = 0; i < InventoryWidgets.Num(); i++) {
 		BindDelegates(InventoryWidgets[i]);
 	}
@@ -59,10 +98,10 @@ void UInventoryComponent::BeginPlay()
 
 void UInventoryComponent::BindDelegates(UInventoryWidget* InventoryWidget)
 {
-	InventoryWidget->KeyDown.BindUObject(this, &UInventoryComponent::OnKeyDown);
-	InventoryWidget->SlotClicked.BindUObject(this, &UInventoryComponent::OnSlotClicked);
-	InventoryWidget->SlotAddedToFocusPath.BindUObject(this, &UInventoryComponent::OnSlotAddedToFocusPath);
-	InventoryWidget->SlotRemovedFromFocusPath.BindUObject(this, &UInventoryComponent::OnSlotRemovedFromFocusPath);
+	InventoryWidget->KeyDown.BindUObject(this, &UInventoryComponent::BroadcastKeyDown);
+	//InventoryWidget->SlotClicked.BindUObject(this, &UInventoryComponent::OnSlotClicked);
+	//InventoryWidget->SlotAddedToFocusPath.BindUObject(this, &UInventoryComponent::OnSlotAddedToFocusPath);
+	//InventoryWidget->SlotRemovedFromFocusPath.BindUObject(this, &UInventoryComponent::OnSlotRemovedFromFocusPath);
 }
 
 void UInventoryComponent::OnSlotAddedToFocusPath(FSlotStruct InSlotStruct)
@@ -181,12 +220,41 @@ void UInventoryComponent::OnSlotClicked(UInventoryWidget* InInventoryWidget, uin
 
 void UInventoryComponent::ToggleInventory()
 {
-	CharacterSheet->AddToViewport();
-	InventoryWindow->AddToViewport();
-	ClickReason = EClickReason::Equip;
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-	UWidget* WidgetToFocus = InventoryWindow->GetWidgetToFocus();
-	UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PlayerController, WidgetToFocus, WidgetMouseLockMode);
+	if (!PlayerController)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Player Controller is not available!"));
+		return;
+	}
+
+	if (CharacterSheet)
+	{
+		CharacterSheet->AddToViewport();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Character Sheet is not available!"));
+	}
+
+	if (InventoryWindow)
+	{
+		InventoryWindow->AddToViewport();
+		UWidget* WidgetToFocus = InventoryWindow->GetWidgetToFocus();
+		
+		if (WidgetToFocus)
+		{
+			ClickReason = EClickReason::Equip;
+			UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PlayerController, WidgetToFocus, WidgetMouseLockMode);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Please use SetWidgetToFocus function of the Inventory Window and set the Widget that should be focused when Inventory is first opened!"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Inventory Window is not available!"));
+	}
 }
 
 bool UInventoryComponent::CheckIfKeyPressed(TArray<FInputActionKeyMapping> InInputActionKeyMappings, FKey PressedKey)
@@ -204,11 +272,12 @@ bool UInventoryComponent::CheckIfKeyPressed(TArray<FInputActionKeyMapping> InInp
 	return false;
 }
 
-void UInventoryComponent::OnKeyDown(const FKeyEvent& InKeyEvent)
+void UInventoryComponent::BroadcastKeyDown(const FKey& InKey)
 {
-	FKey PressedKey = InKeyEvent.GetKey();
+	//FKey PressedKey = InKeyEvent.GetKey();
+	OnKeyDown.Broadcast(InKey);
 
-	TArray<FInputActionKeyMapping> ChangeFocusedWindowKeyMappings = GetInputActionKeyMappings(EInputAction::ChangeFocusedWindow);
+	/*TArray<FInputActionKeyMapping> ChangeFocusedWindowKeyMappings = GetInputActionKeyMappings(EInputAction::ChangeFocusedWindow);
 	bool IsChangeFocusedWindowKeyPressed = CheckIfKeyPressed(ChangeFocusedWindowKeyMappings, PressedKey);
 
 	TArray<FInputActionKeyMapping> ToggleInventoryKeyMappings = GetInputActionKeyMappings(EInputAction::ToggleInventory);
@@ -270,7 +339,7 @@ void UInventoryComponent::OnKeyDown(const FKeyEvent& InKeyEvent)
 		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 		UWidgetBlueprintLibrary::SetInputMode_GameOnly(PlayerController);
 		break;
-	}
+	}*/
 }
 
 void UInventoryComponent::ToggleWidget(EToggleAction InToggleAction)
@@ -453,4 +522,84 @@ void UInventoryComponent::SetLootWindow(TArray<FSlotStruct> InInventory)
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 	UWidget* WidgetToFocus = LootWindow->GetWidgetToFocus();
 	UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PlayerController, WidgetToFocus, WidgetMouseLockMode);
+}
+void UInventoryComponent::DisplayInventoryWindow()
+{
+	DisplayInventoryWidget(InventoryWindow, "Inventory Window is not available!");
+}
+
+void UInventoryComponent::DisplayCharacterSheet()
+{
+	DisplayInventoryWidget(CharacterSheet, "Character Sheet is not available!");
+}
+
+void UInventoryComponent::DisplayInventoryWidget(UInventoryWidget* Widget, FString Message)
+{
+	if (Widget)
+	{
+		Widget->AddToViewport();
+		switch (UIInputMode)
+		{
+		case EUIInputMode::UIOnly:
+			UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(
+				UGameplayStatics::GetPlayerController(this, 0),
+				Widget->GetWidgetToFocus(),
+				WidgetMouseLockMode);
+		case EUIInputMode::GameAndUI:
+			UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(
+				UGameplayStatics::GetPlayerController(this, 0),
+				Widget->GetWidgetToFocus(),
+				WidgetMouseLockMode);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
+	}
+}
+
+void UInventoryComponent::HideInventoryWindow()
+{
+	HideInventoryWidget(InventoryWindow, "Inventory Window is not available!");
+}
+
+void UInventoryComponent::HideCharacterSheet()
+{
+	HideInventoryWidget(CharacterSheet, "Character Sheet is not available!");
+}
+
+void UInventoryComponent::HideInventoryWidget(UInventoryWidget* Widget, FString Message)
+{
+	if (Widget)
+	{
+		Widget->RemoveFromViewport();
+		UWidgetBlueprintLibrary::SetInputMode_GameOnly(UGameplayStatics::GetPlayerController(this, 0));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
+	}
+}
+
+bool UInventoryComponent::IsInventoryWindowVisible()
+{
+	return IsInventoryWidgetVisible(InventoryWindow, "Inventory Window is not available!");
+}
+
+bool UInventoryComponent::IsCharacterSheetVisible()
+{
+	return IsInventoryWidgetVisible(CharacterSheet, "Character Sheet is not available!");
+}
+
+bool UInventoryComponent::IsInventoryWidgetVisible(UInventoryWidget* Widget, FString Message)
+{
+	if (Widget)
+	{
+		return Widget->IsInViewport();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
+		return false;
+	}
 }

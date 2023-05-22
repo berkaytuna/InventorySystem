@@ -9,6 +9,8 @@
 #include "InventoryInterface.h"
 #include "InventoryComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnKeyDownUI, const FKey&, Key);
+
 class UWidget;
 class UInventoryWindow;
 class UCharacterSheet;
@@ -52,6 +54,13 @@ enum EInputAction
 {
 	ChangeFocusedWindow,
 	ToggleInventory,
+};
+
+UENUM()
+enum EUIInputMode
+{
+	UIOnly,
+	GameAndUI
 };
 
 USTRUCT()
@@ -112,6 +121,12 @@ class INVENTORYSYSTEM_API UInventoryComponent : public UActorComponent, public I
 
 public:
 
+	/* Broadcasted on key down during UI Focus */
+	UPROPERTY(BlueprintAssignable, Category = "Inventory System")
+	FOnKeyDownUI OnKeyDown;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory System")
+	TEnumAsByte<EUIInputMode> UIInputMode;
 	UPROPERTY(EditAnywhere, Category = "Inventory System")
 	EMouseLockMode WidgetMouseLockMode;
 	UPROPERTY(EditAnywhere, Category = "Inventory System")
@@ -146,10 +161,33 @@ public:
 	void SetLootWindow(TArray<FSlotStruct> InInventory);
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void ToggleInventory();
-	void OnKeyDown(const FKeyEvent& InKeyEvent);
+	void BroadcastKeyDown(const FKey& InKey);
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCosmetic, Category = "Inventory System")
 	void OnSlotClicked(FSlotStruct SlotStruct);
 
+	/** Displays Inventory Window */
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	void DisplayInventoryWindow();
+
+	/** Displays Character Sheet */
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	void DisplayCharacterSheet();
+
+	/** Hides Inventory Window */
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	void HideInventoryWindow();
+
+	/** Hides Character Sheet */
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	void HideCharacterSheet();
+
+	/** Returns if Inventory Window is currently visible */
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	bool IsInventoryWindowVisible();
+
+	/** Returns if Character Sheet is currently visible */
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	bool IsCharacterSheetVisible();
 
 protected:
 	virtual void BeginPlay() override;
@@ -162,6 +200,15 @@ private:
 	// Widget array containing to be focused widgets when their owning Inventory Widget is active
 	TArray<TWeakObjectPtr<UWidget>> FocusedWidgets;
 	TArray<TWeakObjectPtr<UInventoryWidget>> InventoryWidgetsInViewport;
+
+	/** Displays Inventory Widget */
+	void DisplayInventoryWidget(UInventoryWidget* Widget, FString Message);
+
+	/** Hides Inventory Widget */
+	void HideInventoryWidget(UInventoryWidget* Widget, FString Message);
+
+	/** Returns if Inventory Widget is currently visible */
+	bool IsInventoryWidgetVisible(UInventoryWidget* Widget, FString Message);
 
 	void BindDelegates(UInventoryWidget* InventoryWidget);
 	void Equip(FItemStruct Item);

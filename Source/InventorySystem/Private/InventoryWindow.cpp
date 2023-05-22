@@ -2,7 +2,7 @@
 
 #include "InventoryWindow.h"
 #include "InventoryComponent.h"
-#include "Components/GridPanel.h"
+#include "Components/UniformGridPanel.h"
 #include "InventorySlot.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/GameplayStatics.h"
@@ -16,20 +16,26 @@ void UInventoryWindow::CreateSlots(int32 InNumberOfSlots, UClass* InventorySlotC
 {
 	SetNumberOfSlots(InNumberOfSlots);
 
-	for (int32 i = 0; i < NumberOfSlots; i++) {
+	for (int32 i = 0; i < NumberOfSlots; i++)
+	{
 		UInventorySlot* InventorySlot = CreateWidget<UInventorySlot>(this, InventorySlotClass);
 		InventorySlot->Clicked.BindUObject(this, &UInventoryWindow::OnSlotClicked);
 		InventorySlot->AddedToFocusPath.BindUObject(this, &UInventoryWindow::OnSlotAddedToFocusPath);
 		InventorySlot->RemovedFromFocusPath.BindUObject(this, &UInventoryWindow::OnSlotRemovedFromFocusPath);
+		InventorySlot->Hovered.BindUObject(this, &UInventoryWindow::OnSlotHovered);
+		InventorySlot->Unhovered.BindUObject(this, &UInventoryWindow::OnSlotUnhovered);
 
 		if (i == 0)
+		{
 			SetFirstWidgetToFocus(InventorySlot->GetButton());
+			SetCurrentSlot(InventorySlot);
+		}
 
-		int32 InRow = i / 8;
-		int32 InCollumn = i % 8;
+		int32 InRow = i / 4;
+		int32 InCollumn = i % 4;
 
 		if (InventoryGrid != nullptr)
-			InventoryGrid->AddChildToGrid(InventorySlot, InRow, InCollumn);
+			InventoryGrid->AddChildToUniformGrid(InventorySlot, InRow, InCollumn);
 		else
 			UE_LOG(LogTemp, Warning, TEXT("InventoryGrid is nullptr!"));
 	}

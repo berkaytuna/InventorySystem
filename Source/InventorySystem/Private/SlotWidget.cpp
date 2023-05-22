@@ -12,6 +12,9 @@ void USlotWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
+	GetButton()->OnHovered.AddDynamic(this, &USlotWidget::OnHovered);
+	GetButton()->OnUnhovered.AddDynamic(this, &USlotWidget::OnUnhovered);
+
 	if (Button != nullptr)
 		Button->OnClicked.AddDynamic(this, &USlotWidget::OnClicked);
 	else
@@ -67,4 +70,14 @@ void USlotWidget::NativeOnRemovedFromFocusPath(const FFocusEvent& InFocusEvent)
 {
 	Super::NativeOnRemovedFromFocusPath(InFocusEvent);
 	RemovedFromFocusPath.ExecuteIfBound(this);
+}
+
+void USlotWidget::OnHovered()
+{
+	Hovered.ExecuteIfBound(this);
+}
+
+void USlotWidget::OnUnhovered()
+{
+	Unhovered.ExecuteIfBound(this);
 }

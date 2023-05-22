@@ -10,6 +10,8 @@
 DECLARE_DELEGATE_OneParam(FClicked, USlotWidget*);
 DECLARE_DELEGATE_OneParam(FAddedToFocusPath, USlotWidget*);
 DECLARE_DELEGATE_OneParam(FRemovedFromFocusPath, USlotWidget*);
+DECLARE_DELEGATE_OneParam(FHovered, USlotWidget*);
+DECLARE_DELEGATE_OneParam(FUnhovered, USlotWidget*);
 
 class UButton;
 class UImage;
@@ -27,6 +29,8 @@ public:
 	FClicked Clicked;
 	FAddedToFocusPath AddedToFocusPath;
 	FRemovedFromFocusPath RemovedFromFocusPath;
+	FHovered Hovered;
+	FUnhovered Unhovered;
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void SetButtonAndImages(UButton* NewButton, UImage* NewImage, UImage* NewShadowImage, UTexture2D* EmptySlotTexture);
@@ -36,6 +40,7 @@ public:
 
 	virtual void Empty();
 
+	//UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	UButton* GetButton() { return Button; };
 	FSlotStruct GetSlotStruct() { return SlotStruct; };
 
@@ -62,4 +67,11 @@ protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeOnAddedToFocusPath(const FFocusEvent& InFocusEvent) override;
 	virtual void NativeOnRemovedFromFocusPath(const FFocusEvent& InFocusEvent) override;
+
+private:
+	UFUNCTION()
+	void OnHovered();
+
+	UFUNCTION()
+	void OnUnhovered();
 };
