@@ -23,6 +23,8 @@ public:
 	void RemoveItemFromInventory(int32 Index);
 	void EmptyInventory();
 
+	bool IsSlotEmpty(uint8 InIndex);
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void SetInventoryGrid(UUniformGridPanel* NewInventoryGrid) { InventoryGrid = NewInventoryGrid; };
 	void SetInventory(TArray<FSlotStruct> NewInventory);
@@ -41,4 +43,5 @@ private:
 	int32 GetNumberOfSlots() { return NumberOfSlots; };
 
 	void SetNumberOfSlots(int32 NewNumberOfSlots) { NumberOfSlots = NewNumberOfSlots; };
+
 };

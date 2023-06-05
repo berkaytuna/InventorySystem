@@ -43,8 +43,14 @@ void USlotWidget::HideShadow()
 
 void USlotWidget::Empty()
 {
-	SlotStruct = {};
+	//SlotStruct = {};
+	CurrentTexture = NULL;
 	Image->SetBrushFromTexture(EmptySlotTexture);
+}
+
+bool USlotWidget::IsEmpty()
+{
+	return !CurrentTexture;
 }
 
 void USlotWidget::SetSlotStruct(FSlotStruct InSlotStruct)
@@ -52,6 +58,12 @@ void USlotWidget::SetSlotStruct(FSlotStruct InSlotStruct)
 	SlotStruct = InSlotStruct;
 	UTexture2D* NewThumbnail = SlotStruct.Item.Thumbnail;
 	Image->SetBrushFromTexture(NewThumbnail);
+}
+
+void USlotWidget::SetImage(UTexture2D* InTexture)
+{
+	CurrentTexture = InTexture;
+	Image->SetBrushFromTexture(CurrentTexture);
 }
 
 void USlotWidget::OnClicked()

@@ -74,9 +74,13 @@ void UInventoryWindow::SetInventory(TArray<FSlotStruct> InInventory)
 	}
 }
 
+bool UInventoryWindow::IsSlotEmpty(uint8 InIndex)
+{
+	return Cast<UInventorySlot>(InventoryGrid->GetChildAt(InIndex))->IsEmpty();
+}
+
 void UInventoryWindow::OnSlotClicked(USlotWidget* InSlotWidget)
 {
 	SlotIndex = InventoryGrid->GetChildIndex(InSlotWidget);
 	Super::OnSlotClicked(InSlotWidget);
 }
-

@@ -18,6 +18,12 @@
 #include "Container.h"
 #include "Item.h"
 #include "InfoWindow.h"
+#include "Engine/Texture2D.h"
+
+UInventoryComponent::UInventoryComponent()
+	: NextAvailableInventoryIndex(0)
+{
+}
 
 void UInventoryComponent::BeginPlay()
 {
@@ -28,7 +34,7 @@ void UInventoryComponent::BeginPlay()
 
 	//FString debugMessage = "Please set the %s of Inventory Component!";
 	// Inventory Window
-	PrepareInventory();
+	InitializeInventory();
 	if (BPClasses.InventoryWindow)
 	{
 		InventoryWindow = CreateWidget<UInventoryWindow>(World, BPClasses.InventoryWindow);
@@ -41,7 +47,7 @@ void UInventoryComponent::BeginPlay()
 		// TODO: Write also to screen as user input
 		return;
 	}
-	InventoryWindow->CreateSlots(NumberOfSlots.InventoryWindow, BPClasses.InventorySlot);
+	InventoryWindow->CreateSlots(NumberOfSlots, BPClasses.InventorySlot);
 
 	// Character Sheet
 	if (BPClasses.CharacterSheet)
@@ -99,7 +105,7 @@ void UInventoryComponent::BeginPlay()
 void UInventoryComponent::BindDelegates(UInventoryWidget* InventoryWidget)
 {
 	InventoryWidget->KeyDown.BindUObject(this, &UInventoryComponent::BroadcastKeyDown);
-	//InventoryWidget->SlotClicked.BindUObject(this, &UInventoryComponent::OnSlotClicked);
+	InventoryWidget->SlotClicked.BindUObject(this, &UInventoryComponent::OnSlotClicked);
 	//InventoryWidget->SlotAddedToFocusPath.BindUObject(this, &UInventoryComponent::OnSlotAddedToFocusPath);
 	//InventoryWidget->SlotRemovedFromFocusPath.BindUObject(this, &UInventoryComponent::OnSlotRemovedFromFocusPath);
 }
@@ -114,14 +120,14 @@ void UInventoryComponent::OnSlotAddedToFocusPath(FSlotStruct InSlotStruct)
 
 void UInventoryComponent::OnSlotRemovedFromFocusPath()
 {
-	InfoWindow->RemoveFromViewport();
-	FSlotStruct SlotStruct = { };
-	InfoWindow->SetSlotStruct(SlotStruct);
+	//InfoWindow->RemoveFromViewport();
+	//FSlotStruct SlotStruct = { };
+	//InfoWindow->SetSlotStruct(SlotStruct);
 }
 
 void UInventoryComponent::Interact()
 {
-	TArray<AActor*> OverlappingActors;
+	/*TArray<AActor*> OverlappingActors;
 	GetOwner()->GetOverlappingActors(OverlappingActors, AActor::StaticClass());
 
 	for (int32 i = 0; i < OverlappingActors.Num(); i++) {
@@ -147,12 +153,12 @@ void UInventoryComponent::Interact()
 				return;
 			}
 		}
-	}
+	}*/
 }
 
 void UInventoryComponent::OnSlotClicked(UInventoryWidget* InInventoryWidget, uint8 InSlotIndex, FSlotStruct InSlotStruct)
 {
-	if (InInventoryWidget == CharacterSheet)
+	/*if (InInventoryWidget == CharacterSheet)
 		ClickReason = EClickReason::UnEquip;
 	else if (InInventoryWidget == LootWindow)
 		ClickReason = EClickReason::Take;
@@ -194,7 +200,7 @@ void UInventoryComponent::OnSlotClicked(UInventoryWidget* InInventoryWidget, uin
 		Index = AddToInventory(InSlotStruct);
 		InventoryWindow->AddItemToInventory(Index, InSlotStruct);
 		break;
-	}
+	}*/
 }
 
 /*UInventoryWidget* UInventoryComponent::CreateInventoryWidget(UClass* WidgetClass)
@@ -480,15 +486,15 @@ TArray<FInputActionKeyMapping> UInventoryComponent::GetInputActionKeyMappings(EI
 	return InputActionKeyMappings;
 }
 
-void UInventoryComponent::PrepareInventory()
+void UInventoryComponent::InitializeInventory()
 {
-	Inventory.Empty(NumberOfSlots.InventoryWindow);
-	Inventory.AddZeroed(NumberOfSlots.InventoryWindow);
+	Inventory.Empty(NumberOfSlots);
+	Inventory.AddZeroed(NumberOfSlots);
 }
 
 void UInventoryComponent::Equip(FItemStruct Item)
 {
-	TArray<UEquipmentSlot*> EquipmentSlots = CharacterSheet->GetSlots();
+	/*TArray<UEquipmentSlot*> EquipmentSlots = CharacterSheet->GetSlots();
 	FSlotStruct SlotStruct{Item, 1};
 
 	switch (Item.Subtype)
@@ -508,7 +514,7 @@ void UInventoryComponent::Equip(FItemStruct Item)
 	case Shoes:
 		EquipmentSlots[4]->SetSlotStruct(SlotStruct);
 		break;
-	}
+	}*/
 }
 
 void UInventoryComponent::SetLootWindow(TArray<FSlotStruct> InInventory)
@@ -523,6 +529,7 @@ void UInventoryComponent::SetLootWindow(TArray<FSlotStruct> InInventory)
 	UWidget* WidgetToFocus = LootWindow->GetWidgetToFocus();
 	UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PlayerController, WidgetToFocus, WidgetMouseLockMode);
 }
+
 void UInventoryComponent::DisplayInventoryWindow()
 {
 	DisplayInventoryWidget(InventoryWindow, "Inventory Window is not available!");
@@ -602,4 +609,58 @@ bool UInventoryComponent::IsInventoryWidgetVisible(UInventoryWidget* Widget, FSt
 		UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
 		return false;
 	}
+}
+
+TArray<AActor*> UInventoryComponent::GetInventory()
+{
+	return Inventory;
+}
+
+void UInventoryComponent::AddToInventory(AActor* InItem, UTexture2D* InIcon, int32 InIndex)
+{
+	if (!InItem)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Item is not set (InventoryComponent AddToInventory) !"));
+		return;
+	}
+	if (!InIcon)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Icon is not set (InventoryComponent AddToInventory) !"));
+		return;
+	}
+
+	int32 Index = -1;
+	if (InIndex < -1 && InIndex > NumberOfSlots - 1)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Set Index is higher than Number of Slots or negative (InventoryComponent AddToInventory) !"));
+		return;
+	}
+	else if (Index == -1)
+	{
+		Index = NextAvailableInventoryIndex;
+		do
+		{
+			NextAvailableInventoryIndex++;
+			if (NextAvailableInventoryIndex > NumberOfSlots - 1)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Inventory is full (InventoryComponent AddToInventory) !"));
+				break;
+			}
+		} while (!InventoryWindow->IsSlotEmpty(NextAvailableInventoryIndex));
+	}
+	else
+	{
+		Index = InIndex;
+	}
+
+	Inventory.Insert(InItem, Index);
+	Icons.Insert(InIcon, Index);
+}
+
+void UInventoryComponent::RemoveFromInventory(uint8 InIndex)
+{
+}
+
+void UInventoryComponent::InitializeInventoryWindow()
+{
 }

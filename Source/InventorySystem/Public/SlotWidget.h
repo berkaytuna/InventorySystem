@@ -25,7 +25,6 @@ class INVENTORYSYSTEM_API USlotWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-
 	FClicked Clicked;
 	FAddedToFocusPath AddedToFocusPath;
 	FRemovedFromFocusPath RemovedFromFocusPath;
@@ -40,12 +39,16 @@ public:
 
 	virtual void Empty();
 
+	bool IsEmpty();
+
 	//UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	UButton* GetButton() { return Button; };
 	FSlotStruct GetSlotStruct() { return SlotStruct; };
 
 	void SetSlotStruct(FSlotStruct NewSlotStruct);
 	void SetSlotIndex(int32 InSlotIndex) { SlotIndex = InSlotIndex; };
+
+	void SetImage(UTexture2D* InTexture);
 
 protected:
 
@@ -61,6 +64,8 @@ protected:
 	UImage* ShadowImage;
 	UPROPERTY()
 	UTexture2D* EmptySlotTexture;
+
+	UTexture2D* CurrentTexture = NULL;
 
 	UFUNCTION()
 	virtual void OnClicked();
