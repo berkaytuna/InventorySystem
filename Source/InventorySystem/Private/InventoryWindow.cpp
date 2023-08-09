@@ -74,13 +74,29 @@ void UInventoryWindow::SetInventory(TArray<FSlotStruct> InInventory)
 	}
 }
 
+UInventorySlot* UInventoryWindow::GetSlot(uint8 InIndex)
+{
+	return Cast<UInventorySlot>(InventoryGrid->GetChildAt(InIndex));
+}
+
 bool UInventoryWindow::IsSlotEmpty(uint8 InIndex)
 {
-	return Cast<UInventorySlot>(InventoryGrid->GetChildAt(InIndex))->IsEmpty();
+	return GetSlot(InIndex)->IsEmpty();
+}
+
+void UInventoryWindow::SetSlotImage(UTexture2D* InTexture, uint8 InIndex)
+{
+	GetSlot(InIndex)->SetImage(InTexture);
+}
+
+void UInventoryWindow::OnSlotAddedToFocusPath(USlotWidget* InSlotWidget)
+{
+	CurrentSlotIndex = InventoryGrid->GetChildIndex(InSlotWidget);
+	Super::OnSlotAddedToFocusPath(InSlotWidget);
 }
 
 void UInventoryWindow::OnSlotClicked(USlotWidget* InSlotWidget)
 {
-	SlotIndex = InventoryGrid->GetChildIndex(InSlotWidget);
+	//CurrentSlotIndex = InventoryGrid->GetChildIndex(InSlotWidget);
 	Super::OnSlotClicked(InSlotWidget);
 }

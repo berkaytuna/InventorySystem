@@ -1,7 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+#include "InventoryWidget.h"
 
 #include "Kismet/GameplayStatics.h"
-#include "InventoryWidget.h"
 #include "InventorySystem.h"
 #include "Components/Button.h"
 #include "SlotStruct.h"
@@ -16,13 +15,15 @@ void UInventoryWidget::OnSlotClicked(USlotWidget* InSlotWidget)
 {
 	FSlotStruct SlotStruct = InSlotWidget->GetSlotStruct();
 	InSlotWidget->Empty();
-	SlotClicked.ExecuteIfBound(this, SlotIndex, SlotStruct);
+	SlotClicked.ExecuteIfBound(this, CurrentSlotIndex, SlotStruct);
 }
 
 void UInventoryWidget::OnSlotAddedToFocusPath(USlotWidget* InSlotWidget)
 {
 	SetCurrentSlot(InSlotWidget);
 	SetWidgetToFocus(InSlotWidget->GetButton());	
+
+	SlotAddedToFocusPath.ExecuteIfBound(CurrentSlotIndex);
 	
 	//FSlotStruct SlotStruct = InSlotWidget->GetSlotStruct();
 	//SlotAddedToFocusPath.ExecuteIfBound(SlotStruct);
@@ -65,6 +66,11 @@ void UInventoryWidget::SetCurrentSlot(USlotWidget* InSlot)
 	{
 		CurrentSlot->DisplayShadow();
 	}
+}
+
+int32 UInventoryWidget::GetCurrentSlotIndex()
+{
+	return CurrentSlotIndex;
 }
 
 USlotWidget* UInventoryWidget::GetCurrentSlot()

@@ -7,6 +7,7 @@
 #include "SlotStruct.h"
 #include "GameFramework/InputSettings.h"
 #include "InventoryInterface.h"
+#include "Engine/UserDefinedStruct.h"
 
 #include "InventoryComponent.generated.h"
 
@@ -98,6 +99,14 @@ struct FBPClasses
 	UClass* InventorySlot;
 };
 
+USTRUCT(BlueprintType)
+struct FItemDetails
+{
+	GENERATED_BODY()
+
+	UTexture2D* Icon = nullptr;
+};
+
 USTRUCT()
 struct FActionMappingNames
 {
@@ -114,6 +123,12 @@ struct FActionMappingNames
 
 	UPROPERTY(EditAnywhere, Category = "Action Mapping Names")
 	FName SwitchFocusedWindow;
+};
+
+struct FInventoryItem
+{
+	UUserDefinedStruct* ItemStruct;
+	UTexture2D* Icon;
 };
 
 UCLASS(Blueprintable, ClassGroup = (InventorySystem), meta = (BlueprintSpawnableComponent, DisplayName = "Inventory Component"))
@@ -201,18 +216,26 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	TArray<AActor*> GetInventory();
 
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	UUserDefinedStruct* GetItemStructAt(int32 Index);
+
 	/** Adds an actor to the Inventory */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System", meta = (AdvancedDisplay = "InIndex"))
-	void AddToInventory(AActor* InActor = NULL, UTexture2D* InIcon = NULL, int32 InIndex = -1);
+	UFUNCTION(BlueprintCallable, Category = "Inventory System", meta = (AdvancedDisplay = "Index"))
+	void AddToInventory(UUserDefinedStruct* ItemStruct = NULL, UTexture2D* Icon = NULL, int32 Index = -1);
 
 	/** Removes an actor from the Inventory by index */
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void RemoveFromInventory(uint8 InIndex);
 
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	int32 GetCurrentSlotIndex();
+
 protected:
 	virtual void BeginPlay() override;
 
-private:	
+private:
+	int32 CurrentSlotIndex;
+
 	EClickReason ClickReason;
 	AContainer* ActiveContainer;
 	uint8 WidgetCount;
@@ -221,9 +244,9 @@ private:
 	TArray<TWeakObjectPtr<UWidget>> FocusedWidgets;
 	TArray<TWeakObjectPtr<UInventoryWidget>> InventoryWidgetsInViewport;
 
-	TArray<AActor*> Inventory;
-
-	TArray<UTexture2D*> Icons;
+	//TArray<AActor*> Inventory;
+	//TArray<UTexture2D*> Icons;
+	TArray<FInventoryItem> Inventory;
 
 	/** Displays Inventory Widget */
 	void DisplayInventoryWidget(UInventoryWidget* Widget, FString Message);
@@ -237,9 +260,9 @@ private:
 	void BindDelegates(UInventoryWidget* InventoryWidget);
 	void Equip(FItemStruct Item);
 	void InitializeInventory();
-	void OnSlotAddedToFocusPath(FSlotStruct InSlotStruct);
+	void OnSlotAddedToFocusPath(int32 Index);
 	void OnSlotRemovedFromFocusPath();
-	void OnSlotClicked(UInventoryWidget* InInventoryWidget, uint8 InSlotIndex, FSlotStruct InSlotStruct);
+	void OnSlotClicked(UInventoryWidget* InInventoryWidget, int32 InSlotIndex, FSlotStruct InSlotStruct);
 	UInventoryWidget* CreateInventoryWidget(UClass* WidgetClass);
 	void ToggleWidgetInternal(UInventoryWidget* InWidget, EMouseLockMode InMouseLockMode);
 	bool CheckIfKeyPressed(TArray<FInputActionKeyMapping> InInputActionKeyMappings, FKey PressedKey);

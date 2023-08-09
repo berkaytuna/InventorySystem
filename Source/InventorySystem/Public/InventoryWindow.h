@@ -25,16 +25,17 @@ public:
 
 	bool IsSlotEmpty(uint8 InIndex);
 
+	void SetSlotImage(UTexture2D* InTexture, uint8 InIndex);
+
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void SetInventoryGrid(UUniformGridPanel* NewInventoryGrid) { InventoryGrid = NewInventoryGrid; };
 	void SetInventory(TArray<FSlotStruct> NewInventory);
 
 protected:
-
+	virtual void OnSlotAddedToFocusPath(USlotWidget* InSlotWidget) final;
 	virtual void OnSlotClicked(USlotWidget* InSlotWidget) final;
 
 private:
-
 	int32 NumberOfSlots;
 
 	UPROPERTY()
@@ -44,4 +45,5 @@ private:
 
 	void SetNumberOfSlots(int32 NewNumberOfSlots) { NumberOfSlots = NewNumberOfSlots; };
 
+	UInventorySlot* GetSlot(uint8 InIndex);
 };

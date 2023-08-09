@@ -110,12 +110,14 @@ void UInventoryComponent::BindDelegates(UInventoryWidget* InventoryWidget)
 	//InventoryWidget->SlotRemovedFromFocusPath.BindUObject(this, &UInventoryComponent::OnSlotRemovedFromFocusPath);
 }
 
-void UInventoryComponent::OnSlotAddedToFocusPath(FSlotStruct InSlotStruct)
+void UInventoryComponent::OnSlotAddedToFocusPath(int32 InIndex)
 {
-	InfoWindow->SetSlotStruct(InSlotStruct);
-	InfoWindow->SetClickReason(ClickReason);
-	if (InSlotStruct.Quantity > 0)
-		InfoWindow->AddToViewport();
+	CurrentSlotIndex = InIndex;
+
+	//InfoWindow->SetSlotStruct(InSlotStruct);
+	//InfoWindow->SetClickReason(ClickReason);
+	//if (InSlotStruct.Quantity > 0)
+	//	InfoWindow->AddToViewport();
 }
 
 void UInventoryComponent::OnSlotRemovedFromFocusPath()
@@ -156,7 +158,7 @@ void UInventoryComponent::Interact()
 	}*/
 }
 
-void UInventoryComponent::OnSlotClicked(UInventoryWidget* InInventoryWidget, uint8 InSlotIndex, FSlotStruct InSlotStruct)
+void UInventoryComponent::OnSlotClicked(UInventoryWidget* InInventoryWidget, int32 InSlotIndex, FSlotStruct InSlotStruct)
 {
 	/*if (InInventoryWidget == CharacterSheet)
 		ClickReason = EClickReason::UnEquip;
@@ -613,14 +615,36 @@ bool UInventoryComponent::IsInventoryWidgetVisible(UInventoryWidget* Widget, FSt
 
 TArray<AActor*> UInventoryComponent::GetInventory()
 {
-	return Inventory;
+	//TArray<AActor*> InventoryItems;
+	//for (const FInventoryItem& Element : Inventory)
+	//{
+	//	InventoryItems.Add(Element.Item);
+	//}
+	//
+	//return InventoryItems;
+	return TArray<AActor*>();	
 }
 
-void UInventoryComponent::AddToInventory(AActor* InItem, UTexture2D* InIcon, int32 InIndex)
+UUserDefinedStruct* UInventoryComponent::GetItemStructAt(int32 InIndex)
 {
-	if (!InItem)
+	UUserDefinedStruct* ItemStruct = nullptr;
+	if (Inventory.IsValidIndex(InIndex))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Item is not set (InventoryComponent AddToInventory) !"));
+		ItemStruct = Inventory[InIndex].ItemStruct;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Inventory Index not valid (InventoryComponent AddToInventory) !"));
+	}
+
+	return ItemStruct;
+}
+
+void UInventoryComponent::AddToInventory(UUserDefinedStruct* InItemStruct, UTexture2D* InIcon, int32 InIndex)
+{
+	if (!InItemStruct)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Item Struct is not set (InventoryComponent AddToInventory) !"));
 		return;
 	}
 	if (!InIcon)
@@ -653,8 +677,16 @@ void UInventoryComponent::AddToInventory(AActor* InItem, UTexture2D* InIcon, int
 		Index = InIndex;
 	}
 
-	Inventory.Insert(InItem, Index);
-	Icons.Insert(InIcon, Index);
+	if (Inventory.IsValidIndex(Index))
+	{
+		Inventory[Index] = FInventoryItem({ InItemStruct, InIcon });
+		InventoryWindow->SetSlotImage(Inventory[Index].Icon, Index);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Inventory Index not valid (InventoryComponent AddToInventory) !"));
+		return;
+	}
 }
 
 void UInventoryComponent::RemoveFromInventory(uint8 InIndex)
@@ -663,4 +695,20 @@ void UInventoryComponent::RemoveFromInventory(uint8 InIndex)
 
 void UInventoryComponent::InitializeInventoryWindow()
 {
+}
+
+int32 UInventoryComponent::GetCurrentSlotIndex()
+{
+	int32 Index = -1;
+	if (!InventoryWindow->IsInViewport() && !CharacterSheet->IsInViewport())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No Inventory Widget in Viewport (InventoryComponent GetCurrentSlotIndex) !"));
+		Index = -1;
+	}
+	else
+	{
+		Index = CurrentSlotIndex;
+	}
+
+	return Index;
 }

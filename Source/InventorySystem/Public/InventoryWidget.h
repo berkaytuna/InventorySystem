@@ -10,8 +10,8 @@
 #include "InventoryWidget.generated.h"
 
 DECLARE_DELEGATE_OneParam(FKeyDown, const FKey&);
-DECLARE_DELEGATE_ThreeParams(FSlotClicked, UInventoryWidget*, uint8, FSlotStruct);
-DECLARE_DELEGATE_OneParam(FSlotAddedToFocusPath, FSlotStruct);
+DECLARE_DELEGATE_ThreeParams(FSlotClicked, UInventoryWidget*, int32, FSlotStruct);
+DECLARE_DELEGATE_OneParam(FSlotAddedToFocusPath, int32);
 DECLARE_DELEGATE(FSlotRemovedFromFocusPath);
 
 class UInventoryComponent;
@@ -42,9 +42,11 @@ public:
 	
 	USlotWidget* GetCurrentSlot();
 
+	int32 GetCurrentSlotIndex();
+
 protected:
 
-	uint8 SlotIndex;
+	int32 CurrentSlotIndex;
 
 	UWidget* WidgetToFocusInternal;
 	UWidget* FirstWidgetToFocusInternal;
