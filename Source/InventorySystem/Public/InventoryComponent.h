@@ -13,6 +13,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnKeyDownUI, const FKey&, Key);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquipKeyDownUI, int32, SlotIndex);
 
 class UWidget;
 class UInventoryWindow;
@@ -144,6 +145,15 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Inventory System")
 	FOnKeyDownUI OnKeyDown;
 
+	/* Broadcasted on equip key down during UI Focus */
+	UPROPERTY(BlueprintAssignable, Category = "Inventory System")
+	FOnEquipKeyDownUI OnEquipKeyDown;
+
+	UPROPERTY(EditAnywhere, Category = "Inventory System")
+	FKey ToggleKey;
+	UPROPERTY(EditAnywhere, Category = "Inventory System")
+	FKey EquipKey;
+
 	UPROPERTY(EditAnywhere, Category = "Inventory System")
 	TEnumAsByte<EUIInputMode> UIInputMode;
 	UPROPERTY(EditAnywhere, Category = "Inventory System")
@@ -188,6 +198,10 @@ public:
 	//UFUNCTION(BlueprintImplementableEvent, BlueprintCosmetic, Category = "Inventory System")
 	//void OnSlotClicked(FSlotStruct SlotStruct);
 
+	/** Toggles Inventory Window */
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	void ToggleInventoryWindow();
+
 	/** Displays Inventory Window */
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void DisplayInventoryWindow();
@@ -218,6 +232,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	UUserDefinedStruct* GetItemStructAt(int32 Index);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	void SetInventorySlotImage(int32 Index, UTexture2D* Icon);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory System")
+	void RemoveInventorySlotImage(int32 Index);
 
 	/** Adds an actor to the Inventory */
 	UFUNCTION(BlueprintCallable, Category = "Inventory System", meta = (AdvancedDisplay = "Index"))

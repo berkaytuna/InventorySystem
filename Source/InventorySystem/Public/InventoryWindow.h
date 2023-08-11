@@ -26,10 +26,13 @@ public:
 	bool IsSlotEmpty(uint8 InIndex);
 
 	void SetSlotImage(UTexture2D* InTexture, uint8 InIndex);
+	void RemoveSlotImage(uint8 InIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void SetInventoryGrid(UUniformGridPanel* NewInventoryGrid) { InventoryGrid = NewInventoryGrid; };
 	void SetInventory(TArray<FSlotStruct> NewInventory);
+
+	int32 GetCurrentSlotIndex() override final;
 
 protected:
 	virtual void OnSlotAddedToFocusPath(USlotWidget* InSlotWidget) final;

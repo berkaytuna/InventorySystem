@@ -42,7 +42,7 @@ public:
 	
 	USlotWidget* GetCurrentSlot();
 
-	int32 GetCurrentSlotIndex();
+	virtual int32 GetCurrentSlotIndex();
 
 protected:
 

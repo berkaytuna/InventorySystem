@@ -8,6 +8,7 @@
 #include "EquipmentSlot.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Kismet/KismetArrayLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "Components/Button.h"
@@ -20,6 +21,7 @@
 #include "InfoWindow.h"
 #include "Engine/Texture2D.h"
 
+
 UInventoryComponent::UInventoryComponent()
 	: NextAvailableInventoryIndex(0)
 {
@@ -28,6 +30,11 @@ UInventoryComponent::UInventoryComponent()
 void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (! UKismetSystemLibrary::IsStandalone(this) && GetOwner()->HasAuthority())
+	{
+		return;
+	}
 
 	// Create Inventory Widgets
 	UWorld* World = GetWorld();
@@ -50,17 +57,17 @@ void UInventoryComponent::BeginPlay()
 	InventoryWindow->CreateSlots(NumberOfSlots, BPClasses.InventorySlot);
 
 	// Character Sheet
-	if (BPClasses.CharacterSheet)
-	{
-		CharacterSheet = CreateWidget<UCharacterSheet>(World, BPClasses.CharacterSheet);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Character Sheet not set!"));
-		// TODO: Write also to screen as user input
-		return;
-	}
-
+	//if (BPClasses.CharacterSheet)
+	//{
+	//	CharacterSheet = CreateWidget<UCharacterSheet>(World, BPClasses.CharacterSheet);
+	//}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("Character Sheet not set!"));
+	//	// TODO: Write also to screen as user input
+	//	return;
+	//}
+	
 	/*// Loot Window
 	if (BPClasses.LootWindow)
 	{
@@ -96,10 +103,12 @@ void UInventoryComponent::BeginPlay()
 	//InfoWindow = CreateWidget<UInfoWindow>(World, InfoWindowBPClass);
 
 	// Binding delegates for Inventory Widgets
-	InventoryWidgets = { InventoryWindow, CharacterSheet/*, LootWindow*/};
-	for (uint8 i = 0; i < InventoryWidgets.Num(); i++) {
-		BindDelegates(InventoryWidgets[i]);
-	}
+	//InventoryWidgets = { InventoryWindow, CharacterSheet/*, LootWindow*/};
+	//for (uint8 i = 0; i < InventoryWidgets.Num(); i++) {
+	//	BindDelegates(InventoryWidgets[i]);
+	//}
+
+	BindDelegates(InventoryWindow);
 }
 
 void UInventoryComponent::BindDelegates(UInventoryWidget* InventoryWidget)
@@ -283,7 +292,17 @@ bool UInventoryComponent::CheckIfKeyPressed(TArray<FInputActionKeyMapping> InInp
 void UInventoryComponent::BroadcastKeyDown(const FKey& InKey)
 {
 	//FKey PressedKey = InKeyEvent.GetKey();
-	OnKeyDown.Broadcast(InKey);
+	
+	//OnKeyDown.Broadcast(InKey);
+	if (InKey == ToggleKey)
+	{
+		HideInventoryWindow();
+	}
+	else if (InKey == EquipKey)
+	{
+		OnEquipKeyDown.Broadcast(InventoryWindow->GetCurrentSlotIndex());
+	}
+
 
 	/*TArray<FInputActionKeyMapping> ChangeFocusedWindowKeyMappings = GetInputActionKeyMappings(EInputAction::ChangeFocusedWindow);
 	bool IsChangeFocusedWindowKeyPressed = CheckIfKeyPressed(ChangeFocusedWindowKeyMappings, PressedKey);
@@ -532,6 +551,18 @@ void UInventoryComponent::SetLootWindow(TArray<FSlotStruct> InInventory)
 	UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PlayerController, WidgetToFocus, WidgetMouseLockMode);
 }
 
+void UInventoryComponent::ToggleInventoryWindow()
+{
+	if (!IsInventoryWindowVisible())
+	{
+		DisplayInventoryWindow();
+	}
+	else
+	{
+		HideInventoryWindow();
+	}
+}
+
 void UInventoryComponent::DisplayInventoryWindow()
 {
 	DisplayInventoryWidget(InventoryWindow, "Inventory Window is not available!");
@@ -638,6 +669,16 @@ UUserDefinedStruct* UInventoryComponent::GetItemStructAt(int32 InIndex)
 	}
 
 	return ItemStruct;
+}
+
+void UInventoryComponent::SetInventorySlotImage(int32 Index, UTexture2D* Icon)
+{
+	InventoryWindow->SetSlotImage(Icon, Index);
+}
+
+void UInventoryComponent::RemoveInventorySlotImage(int32 Index)
+{
+	InventoryWindow->RemoveSlotImage(Index);
 }
 
 void UInventoryComponent::AddToInventory(UUserDefinedStruct* InItemStruct, UTexture2D* InIcon, int32 InIndex)
