@@ -4,6 +4,11 @@
 #include "InventorySystem.h"
 #include "Components/Button.h"
 #include "SlotStruct.h"
+	
+UWidget* UInventoryWidget::GetFirstWidgetToFocus()
+{
+	return FirstWidgetToFocusInternal;
+};
 
 void UInventoryWidget::SetFirstWidgetToFocus(UWidget* WidgetToFocus)
 {
@@ -11,12 +16,15 @@ void UInventoryWidget::SetFirstWidgetToFocus(UWidget* WidgetToFocus)
 	WidgetToFocusInternal = WidgetToFocus;
 }
 
-void UInventoryWidget::OnSlotClicked(USlotWidget* InSlotWidget)
+UWidget* UInventoryWidget::GetWidgetToFocus()
 {
-	FSlotStruct SlotStruct = InSlotWidget->GetSlotStruct();
-	InSlotWidget->Empty();
-	SlotClicked.ExecuteIfBound(this, CurrentSlotIndex, SlotStruct);
-}
+	return WidgetToFocusInternal;
+};
+
+void UInventoryWidget::SetWidgetToFocus(UWidget* WidgetToFocus)
+{
+	WidgetToFocusInternal = WidgetToFocus;
+};
 
 void UInventoryWidget::OnSlotAddedToFocusPath(USlotWidget* InSlotWidget)
 {
@@ -24,22 +32,16 @@ void UInventoryWidget::OnSlotAddedToFocusPath(USlotWidget* InSlotWidget)
 	SetWidgetToFocus(InSlotWidget->GetButton());	
 
 	SlotAddedToFocusPath.ExecuteIfBound(CurrentSlotIndex);
-	
-	//FSlotStruct SlotStruct = InSlotWidget->GetSlotStruct();
-	//SlotAddedToFocusPath.ExecuteIfBound(SlotStruct);
 }
 
 void UInventoryWidget::OnSlotRemovedFromFocusPath(USlotWidget* InSlotWidget)
 {
-	//InSlotWidget->HideShadow();
 	SlotRemovedFromFocusPath.ExecuteIfBound();
-
 	SetCurrentSlot(nullptr);
 }
 
 void UInventoryWidget::OnSlotHovered(USlotWidget* InSlotWidget)
 {
-	//SetCurrentSlot(InSlotWidget);
 	InSlotWidget->GetButton()->SetKeyboardFocus();
 }
 

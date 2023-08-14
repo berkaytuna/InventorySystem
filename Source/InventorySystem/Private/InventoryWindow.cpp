@@ -19,7 +19,6 @@ void UInventoryWindow::CreateSlots(int32 InNumberOfSlots, UClass* InventorySlotC
 	for (int32 i = 0; i < NumberOfSlots; i++)
 	{
 		UInventorySlot* InventorySlot = CreateWidget<UInventorySlot>(this, InventorySlotClass);
-		InventorySlot->Clicked.BindUObject(this, &UInventoryWindow::OnSlotClicked);
 		InventorySlot->AddedToFocusPath.BindUObject(this, &UInventoryWindow::OnSlotAddedToFocusPath);
 		InventorySlot->RemovedFromFocusPath.BindUObject(this, &UInventoryWindow::OnSlotRemovedFromFocusPath);
 		InventorySlot->Hovered.BindUObject(this, &UInventoryWindow::OnSlotHovered);
@@ -38,39 +37,6 @@ void UInventoryWindow::CreateSlots(int32 InNumberOfSlots, UClass* InventorySlotC
 			InventoryGrid->AddChildToUniformGrid(InventorySlot, InRow, InCollumn);
 		else
 			UE_LOG(LogTemp, Warning, TEXT("InventoryGrid is nullptr!"));
-	}
-}
-
-void UInventoryWindow::AddItemToInventory(int32 InSlotIndex, FSlotStruct InItemToAdd)
-{
-	UInventorySlot* InventorySlot = Cast<UInventorySlot>(InventoryGrid->GetChildAt(InSlotIndex));
-	InventorySlot->SetSlotStruct(InItemToAdd);
-}
-
-void UInventoryWindow::RemoveItemFromInventory(int32 Index)
-{
-	UInventorySlot* InventorySlot = Cast<UInventorySlot>(InventoryGrid->GetChildAt(Index));
-	InventorySlot->Empty();
-}
-
-void UInventoryWindow::EmptyInventory()
-{
-	for (int32 i = 0; i < NumberOfSlots; i++)
-	{
-		UInventorySlot* InventorySlot = Cast<UInventorySlot>(InventoryGrid->GetChildAt(i));
-		InventorySlot->Empty();
-	}
-}
-
-void UInventoryWindow::SetInventory(TArray<FSlotStruct> InInventory)
-{
-	for (int32 i = 0; i < InInventory.Num(); i++)
-	{
-		if (InInventory[i].Quantity > 0)
-		{
-			UInventorySlot* InventorySlot = Cast<UInventorySlot>(InventoryGrid->GetChildAt(i));
-			InventorySlot->SetSlotStruct(InInventory[i]);
-		}
 	}
 }
 
@@ -106,8 +72,12 @@ void UInventoryWindow::OnSlotAddedToFocusPath(USlotWidget* InSlotWidget)
 	Super::OnSlotAddedToFocusPath(InSlotWidget);
 }
 
-void UInventoryWindow::OnSlotClicked(USlotWidget* InSlotWidget)
+int32 UInventoryWindow::GetNumberOfSlots()
 {
-	//CurrentSlotIndex = InventoryGrid->GetChildIndex(InSlotWidget);
-	Super::OnSlotClicked(InSlotWidget);
-}
+	return NumberOfSlots;
+};
+
+void UInventoryWindow::SetNumberOfSlots(int32 NewNumberOfSlots)
+{
+	NumberOfSlots = NewNumberOfSlots;
+};

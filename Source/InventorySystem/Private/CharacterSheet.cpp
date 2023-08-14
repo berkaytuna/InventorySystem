@@ -11,7 +11,6 @@ void UCharacterSheet::SetSlots(TArray<UEquipmentSlot*> InSlots)
 {
 	for (uint8 i = 0; i < InSlots.Num(); i++) {
 		Slots.Add(InSlots[i]);
-		Slots[i]->Clicked.BindUObject(this, &UCharacterSheet::OnSlotClicked);
 		Slots[i]->AddedToFocusPath.BindUObject(this, &UCharacterSheet::OnSlotAddedToFocusPath);
 		Slots[i]->RemovedFromFocusPath.BindUObject(this, &UCharacterSheet::OnSlotRemovedFromFocusPath);
 	}
