@@ -15,11 +15,8 @@ class INVENTORYSYSTEM_API UInfoWindow : public UUserWidget
 
 public:
 	void SetSlotStruct(FSlotStruct InSlotStruct);
-	void SetClickReason(EClickReason NewClickReason);
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory System")
 	FSlotStruct SlotStruct;
-	UPROPERTY(BlueprintReadOnly, Category = "Inventory System")
-	TEnumAsByte<EClickReason> ClickReason;
 };

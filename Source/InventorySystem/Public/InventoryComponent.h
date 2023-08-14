@@ -11,8 +11,6 @@
 
 #include "InventoryComponent.generated.h"
 
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnKeyDownUI, const FKey&, Key);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquipKeyDownUI, int32, SlotIndex);
 
 class UWidget;
@@ -25,58 +23,11 @@ class UTexture2D;
 class UContainer;
 class UInfoWindow;
 
-UENUM(BlueprintType)
-enum EClickReason
-{
-	Use,
-	Equip,
-	UnEquip,
-	Drop,
-	Take,
-};
-
-UENUM()
-enum ERemoveReason
-{
-	Placeholder,
-	/*Use,
-	Equip,
-	Drop,
-	Destroy*/
-};
-
-UENUM()
-enum EToggleAction
-{
-	Inventory,
-	CharacterSheet,
-	LootWindow,   
-};
-
-UENUM()
-enum EInputAction
-{
-	ChangeFocusedWindow,
-	ToggleInventory,
-};
-
 UENUM()
 enum EUIInputMode
 {
 	UIOnly,
 	GameAndUI
-};
-
-USTRUCT()
-struct FNumberOfSlots
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, Category = "Number of Slots")
-	int32 InventoryWindow;
-
-	UPROPERTY(EditAnywhere, Category = "Number of Slots")
-	int32 LootWindow;
 };
 
 USTRUCT()
@@ -91,45 +42,10 @@ struct FBPClasses
 	UClass* CharacterSheet;
 
 	UPROPERTY(EditAnywhere, Category = "BP Classes")
-	UClass* LootWindow;
-
-	UPROPERTY(EditAnywhere, Category = "BP Classes")
 	UClass* InfoWindow;
 
 	UPROPERTY(EditAnywhere, Category = "BP Classes")
 	UClass* InventorySlot;
-};
-
-USTRUCT(BlueprintType)
-struct FItemDetails
-{
-	GENERATED_BODY()
-
-	UTexture2D* Icon = nullptr;
-};
-
-USTRUCT()
-struct FActionMappingNames
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, Category = "Action Mapping Names")
-	FName ToggleInventory;
-
-	UPROPERTY(EditAnywhere, Category = "Action Mapping Names")
-	FName ToggleCharacterSheet;
-
-	UPROPERTY(EditAnywhere, Category = "Action Mapping Names")
-	FName ToggleLootWindow;
-
-	UPROPERTY(EditAnywhere, Category = "Action Mapping Names")
-	FName SwitchFocusedWindow;
-};
-
-struct FInventoryItem
-{
-	UUserDefinedStruct* ItemStruct;
-	UTexture2D* Icon;
 };
 
 UCLASS(Blueprintable, ClassGroup = (InventorySystem), meta = (BlueprintSpawnableComponent, DisplayName = "Inventory Component"))
@@ -141,97 +57,43 @@ public:
 
 	UInventoryComponent();
 
-	/* Broadcasted on key down during UI Focus */
-	UPROPERTY(BlueprintAssignable, Category = "Inventory System")
-	FOnKeyDownUI OnKeyDown;
-
 	/* Broadcasted on equip key down during UI Focus */
 	UPROPERTY(BlueprintAssignable, Category = "Inventory System")
 	FOnEquipKeyDownUI OnEquipKeyDown;
 
 	UPROPERTY(EditAnywhere, Category = "Inventory System")
 	FKey ToggleKey;
+	
 	UPROPERTY(EditAnywhere, Category = "Inventory System")
 	FKey EquipKey;
 
 	UPROPERTY(EditAnywhere, Category = "Inventory System")
 	TEnumAsByte<EUIInputMode> UIInputMode;
+
 	UPROPERTY(EditAnywhere, Category = "Inventory System")
 	EMouseLockMode WidgetMouseLockMode;
+	
 	UPROPERTY(EditAnywhere, Category = "Inventory System")
 	FBPClasses BPClasses;
+	
 	UPROPERTY(EditAnywhere, Category = "Inventory System")
-	FActionMappingNames ActionMappingNames;
-	UPROPERTY(EditAnywhere, Category = "Inventory System")
-	//FNumberOfSlots NumberOfSlots;
-	uint8 NumberOfSlots = 0;
+	int32 NumberOfSlots = 0;
 
 	UPROPERTY(EditAnywhere, Category = "Inventory System")
 	FString SlotStruct;
 
-	// Inventory Widgets are the main widgets on screen
 	UPROPERTY()
 	UInventoryWindow* InventoryWindow;
+	
 	UPROPERTY()
 	UCharacterSheet* CharacterSheet;
-	UPROPERTY()
-	UInventoryWindow* LootWindow;
+	
 	UPROPERTY()
 	UInfoWindow* InfoWindow;
-
-	/** Interact function to use with the items and containers */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	void Interact();
-	/** Gets the reason a slot is clicked */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	EClickReason GetClickReason() { return ClickReason; };
-	TArray<FInputActionKeyMapping> GetToggleActionKeyMappings(EToggleAction ToggleAction);
-	TArray<FInputActionKeyMapping> GetInputActionKeyMappings(EInputAction InputAction);
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	void ToggleWidget(EToggleAction ToggleAction);
-	void ToggleWidgetNative(EToggleAction ToggleAction);
-	/** Sets the loot window with the inventory of the container */
-	void SetLootWindow(TArray<FSlotStruct> InInventory);
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	void ToggleInventory();
-	void BroadcastKeyDown(const FKey& InKey);
-	//UFUNCTION(BlueprintImplementableEvent, BlueprintCosmetic, Category = "Inventory System")
-	//void OnSlotClicked(FSlotStruct SlotStruct);
-
+	
 	/** Toggles Inventory Window */
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void ToggleInventoryWindow();
-
-	/** Displays Inventory Window */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	void DisplayInventoryWindow();
-
-	/** Displays Character Sheet */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	void DisplayCharacterSheet();
-
-	/** Hides Inventory Window */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	void HideInventoryWindow();
-
-	/** Hides Character Sheet */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	void HideCharacterSheet();
-
-	/** Returns if Inventory Window is currently visible */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	bool IsInventoryWindowVisible();
-
-	/** Returns if Character Sheet is currently visible */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	bool IsCharacterSheetVisible();
-
-	/** Returns Inventory */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	TArray<AActor*> GetInventory();
-
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	UUserDefinedStruct* GetItemStructAt(int32 Index);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void SetInventorySlotImage(int32 Index, UTexture2D* Icon);
@@ -239,37 +101,35 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory System")
 	void RemoveInventorySlotImage(int32 Index);
 
-	/** Adds an actor to the Inventory */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System", meta = (AdvancedDisplay = "Index"))
-	void AddToInventory(UUserDefinedStruct* ItemStruct = NULL, UTexture2D* Icon = NULL, int32 Index = -1);
-
-	/** Removes an actor from the Inventory by index */
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	void RemoveFromInventory(uint8 InIndex);
-
-	UFUNCTION(BlueprintCallable, Category = "Inventory System")
-	int32 GetCurrentSlotIndex();
-
 protected:
 	virtual void BeginPlay() override;
 
 private:
 	int32 CurrentSlotIndex;
 
-	EClickReason ClickReason;
-	AContainer* ActiveContainer;
-	uint8 WidgetCount;
-	TArray<UInventoryWidget*> InventoryWidgets;
-	// Widget array containing to be focused widgets when their owning Inventory Widget is active
-	TArray<TWeakObjectPtr<UWidget>> FocusedWidgets;
-	TArray<TWeakObjectPtr<UInventoryWidget>> InventoryWidgetsInViewport;
+	/** Returns current Slot index */
+	int32 GetCurrentSlotIndex();
 
-	//TArray<AActor*> Inventory;
-	//TArray<UTexture2D*> Icons;
-	TArray<FInventoryItem> Inventory;
+	/** Called when a slot is added to the Focus Path */
+	void OnSlotAddedToFocusPath(int32 InIndex);
+
+	/** Broadcasted when a key is pressed during Inventory Focus */
+	void BroadcastKeyDown(const FKey& InKey);
+
+	/** Displays Inventory Window */
+	void DisplayInventoryWindow();
+
+	/** Displays Character Sheet */
+	void DisplayCharacterSheet();
 
 	/** Displays Inventory Widget */
 	void DisplayInventoryWidget(UInventoryWidget* Widget, FString Message);
+
+	/** Hides Inventory Window */
+	void HideInventoryWindow();
+
+	/** Hides Character Sheet */
+	void HideCharacterSheet();
 
 	/** Hides Inventory Widget */
 	void HideInventoryWidget(UInventoryWidget* Widget, FString Message);
@@ -277,17 +137,9 @@ private:
 	/** Returns if Inventory Widget is currently visible */
 	bool IsInventoryWidgetVisible(UInventoryWidget* Widget, FString Message);
 
-	void BindDelegates(UInventoryWidget* InventoryWidget);
-	void Equip(FItemStruct Item);
-	void InitializeInventory();
-	void OnSlotAddedToFocusPath(int32 Index);
-	void OnSlotRemovedFromFocusPath();
-	void OnSlotClicked(UInventoryWidget* InInventoryWidget, int32 InSlotIndex, FSlotStruct InSlotStruct);
-	UInventoryWidget* CreateInventoryWidget(UClass* WidgetClass);
-	void ToggleWidgetInternal(UInventoryWidget* InWidget, EMouseLockMode InMouseLockMode);
-	bool CheckIfKeyPressed(TArray<FInputActionKeyMapping> InInputActionKeyMappings, FKey PressedKey);
+	/** Returns if Inventory Window is currently visible */
+	bool IsInventoryWindowVisible();
 
-	void InitializeInventoryWindow();
-
-	int32 NextAvailableInventoryIndex;
+	/** Returns if Character Sheet is currently visible */
+	bool IsCharacterSheetVisible();
 };

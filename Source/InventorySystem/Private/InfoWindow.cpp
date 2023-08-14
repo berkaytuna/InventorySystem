@@ -7,8 +7,3 @@ void UInfoWindow::SetSlotStruct(FSlotStruct InSlotStruct)
 {
 	SlotStruct = InSlotStruct;
 }
-
-void UInfoWindow::SetClickReason(EClickReason NewClickReason)
-{
-	ClickReason = NewClickReason;
-}
